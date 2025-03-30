@@ -29,9 +29,15 @@ class Grid:
             if  self.is_this_out_of_bounds(x, y):
                 return False
         # if the field is occupied by anything blocking the way, you cant move here
-        if self.get(x, y).blocks_path:
+        if self.get(x, y).blocks_field:
             return False
         return True
+
+    def is_this_move_possible(self, x1, y1, delta_x, delta_y):
+        # starting position: (x1, x2)
+        destination = (x1 + delta_x, y1 + delta_y)
+        # check if you can move there
+        return self.may_i_move_here(*destination)
 
     def is_this_out_of_bounds(self, x, y):
         if x < 0 or x >= self.width or y < 0 or y >= self.height:

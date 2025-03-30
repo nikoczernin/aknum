@@ -10,7 +10,7 @@ class Item:
     def __init__(self, grid, x, y, label="-", blocks_path=False):
         self.grid = grid
         self.grid.put(self, x, y) # upon spawning put the item onto a grid
-        self.blocks_path = blocks_path # obstacles will block any agent from entering this Item's field
+        self.blocks_field = blocks_path # obstacles will block any agent from entering this Item's field
         self.position = (x, y)
         self.label = label # the label gets returned when printing the grid
         if not isinstance(blocks_path, bool): raise Exception("blocks_path must be a boolean")
