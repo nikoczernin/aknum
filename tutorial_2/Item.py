@@ -1,10 +1,3 @@
-# class IllegalMoveError(Exception):
-#     def __init__(self, reason=None):
-#         msg = "Illegal move"
-#         if reason:
-#             msg += f" – {reason}"
-#         super().__init__(msg)
-
 
 class Item:
     def __init__(self, grid, x, y, label="-", blocks_path=False):

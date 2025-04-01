@@ -1,17 +1,22 @@
-from Item import Item
+# ===================================================
+# Author: Nikolaus Czernin
+# Script: Grid Class for 2D Gridworld Representation
+# Description: A customizable 2D grid with optional hard borders,
+#              item placement and retrieval, and visual display.
+# ===================================================
+
 import numpy as np
 
-
 class Grid:
-    def __init__(self, width, height, hard_borders=True, default_item=Item):
+    def __init__(self, width, height, hard_borders=True, default_item="-"):
         self.width = width
         self.height = height
         self.default_item = default_item
         # self.grid = [[self.default_item(self) for x in range(width)] for y in range(height)]
-        self.grid = np.empty((width, height), dtype=object)
+        self.grid = np.empty((width, height), dtype=str)
         for y in range(height):
             for x in range(width):
-                self.grid[x, y] = default_item(self, x, y)
+                self.grid[x, y] = default_item
         # allow leaving borders (if allowed this typically results in death)
         self.hard_borders = hard_borders
 
@@ -22,27 +27,7 @@ class Grid:
         return self.grid[x, y]
 
     def pop(self, x, y):
-        self.grid[x, y] = self.default_item(self, x, y)
-
-    def may_i_move_here(self, x, y):
-        if self.hard_borders:
-            if  self.is_this_out_of_bounds(x, y):
-                return False
-        # if the field is occupied by anything blocking the way, you cant move here
-        if self.get(x, y).blocks_field:
-            return False
-        return True
-
-    def is_this_move_possible(self, x1, y1, delta_x, delta_y):
-        # starting position: (x1, x2)
-        destination = (x1 + delta_x, y1 + delta_y)
-        # check if you can move there
-        return self.may_i_move_here(*destination)
-
-    def is_this_out_of_bounds(self, x, y):
-        if x < 0 or x >= self.width or y < 0 or y >= self.height:
-            return True
-        return False
+        self.grid[x, y] = self.default_item
 
     def __str__(self, *items, rulers=True):
         out = ""
@@ -59,4 +44,8 @@ class Grid:
         print(self.__str__(*args, **kwargs))
 
 
-
+if __name__ == "__main__":
+    grid = Grid(10, 10)
+    grid.put("G", 4, 5)
+    grid.put("A", 0, 1)
+    print(grid)
