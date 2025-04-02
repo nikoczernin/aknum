@@ -63,6 +63,8 @@ class GridWorld(Environment):
         return False
 
     def is_this_action_possible(self, state, action):
+        # for terminal states, just return False
+        if state in self.terminal_states: return False
         destination = GridWorld.apply_action(state, action)
         return not self.is_this_out_of_bounds(*destination)
 

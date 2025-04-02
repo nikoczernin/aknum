@@ -55,6 +55,8 @@ class Bot():
 
     # function for picking the best action from a policy, draws are resolved randomly
     def pick_action(self, s_t):
+        if s_t in self.env.terminal_states:
+            return
         # get the action with the highest probability given the current state from the policy
         max_prob = max(self.policy[s_t].values())
         # get all actions for this state that have the max probability
@@ -62,6 +64,8 @@ class Bot():
         # pick a random action from the most likely ones
         chosen_key = random.choice(best_keys)
         return chosen_key
+
+
 
     # define the recursive value function that gets the best value possible for each state
     def value_fun(self, s_t, t, gamma):
@@ -81,7 +85,9 @@ class Bot():
         # print("\t"*t, total_reward)
         return total_reward
 
+
     def action_value_fun(self, s_t, a, t, gamma):
+        # print("\t"*t, "AVF:", s_t, a, t)
         # for all states s_t_1 that can result from using this action in this state s_t
         # which is this case is wuascht because the states are deterministic anyway
         s_t_1 = self.env.apply_action(s_t, a)
@@ -89,20 +95,21 @@ class Bot():
         # any future decisions are made with the policy rather than a fixed function
         return self.env.rewards[a] + gamma * self.value_fun(s_t_1, t + 1, gamma)
 
+
     def iterative_policy_evaluation(self, accuracy_thresh, gamma):
         # initiate v: vector with the value q of the best possible action a in state s
         # initial values are random, except for terminal states, for them pick 0
-        v = [1 if s not in self.env.terminal_states else 0 for s in self.env.states]
+        v = {s:(0 if s not in self.env.terminal_states else 0) for s in self.env.states}
         while True:
             Delta = 0
             for i, s in enumerate(self.env.states):
                 # get the value w of the currently best action for state s
-                w = v[i]
+                w = v[s]
                 # apply the Bellman function to iteratively find a better action's value
-                v[i] = self.value_fun(s, 0, gamma)
+                v[s] = self.value_fun(s, 0, gamma)
                 # get your improvement
-                # if Delta >= abs(w - v[i]): print("picking new best function!")
-                Delta = max(Delta, abs(w - v[i]))
+                # if Delta >= abs(w - v[s]): print("picking new best function!")
+                Delta = max(Delta, abs(w - v[s]))
             if Delta < accuracy_thresh:
                 break
         return v
@@ -118,20 +125,22 @@ class Bot():
             # Policy Evaluation
             # initiate v: vector with the value q of the best possible action a in state s
             # initial values are random, except for terminal states, for them pick 0
-            v = [1 if s not in self.env.terminal_states else 0 for s in self.env.states]
+            v = {s: (0 if s not in self.env.terminal_states else 0) for s in self.env.states}
             while True:
                 Delta = 0
                 # for every possible state
                 for i, s in enumerate(self.env.states):
                     # if s in self.env.terminal_states: continue # no need to do anything with the terminal states
-                    w = v[i]
-                    v[i] = self.value_fun(s, 0, gamma)
-                    Delta = max(Delta, abs(w - v[i]))
+                    w = v[s]
+                    v[s] = self.value_fun(s, 0, gamma)
+                    Delta = max(Delta, abs(w - v[s]))
                 if Delta < accuracy_thresh:
                     break
             # Policy Improvement
             policyIsStable = True
             for s in self.env.states:
+                # skip terminal states
+                if s in self.env.terminal_states: continue
                 # if s in self.env.terminal_states: continue # no need to do anything with the terminal states
                 oldAction = self.pick_action(s)
                 # set a new action for the policy
@@ -146,41 +155,50 @@ class Bot():
                     policyIsStable = False
             if policyIsStable:
                 print("Policy Is Stable. Returning ...")
-                print()
+                # print()
                 return v
             print()
 
 
+    def action_value_fun_star(self, s, a, gamma, v):
+        s_t_1 = self.env.apply_action(s, a)
+        # if s_t_1 is a terminal state, its reward will be zero because were already at the goal
+        # otherwise just return the optimal next action's expected reward discounted by gamma
+        return self.env.rewards[a] + (gamma * v[s_t_1] if s_t_1 not in self.env.terminal_states else 0)
+
     def value_iteration(self, accuracy_thresh, gamma):
         print("Value Iteration")
-        v = [1 if s not in self.env.terminal_states else 0 for s in self.env.states]
-        while True:
+        v = {s:(0 if s not in self.env.terminal_states else 0) for s in self.env.states}
+        for j in range(1000000):
             Delta = 0
             for i, s in enumerate(self.env.states):
-                w = v[i]
+                # skip terminal states
+                if s in self.env.terminal_states: continue
+                w = v[s]
                 # get the maximum possible action-value function given the state s
-                v[i] = max([self.value_fun(s, 0, gamma) for a in self.policy[s].keys()])
-                Delta = max(Delta, abs(w - v[i]))
+                # states are deterministic so no need to get probabilities of s_t_1
+                v[s] = max([self.action_value_fun_star(s, a, gamma, v) for a in self.policy[s].keys()])
+                Delta = max(Delta, abs(w - v[s]))
             if Delta < accuracy_thresh:
                 break
         # Policy calculation
         for i, s in enumerate(self.env.states):
+            # skip terminal states
+            if s in self.env.terminal_states: continue
             # set a new best action for the policy
             # pick the action that maximizes the action-value function
             # do that by picking the max value of the policy-keys (i.e. the actions) using the
             # action-value-function as a "key" (i.e. the thing that the max function uses to evaluate the values)
-            best_action = max(self.policy[s].keys(), key=lambda a: self.action_value_fun(s, a, 0, gamma))
+            best_action = max(self.policy[s].keys(), key=lambda a: self.action_value_fun_star(s, a, gamma, v))
             self.policy_set_action(s, best_action)
             print(f"State {s}: Best action = {best_action}")
-        print()
         return v
 
 
 
 def main():
-
     w, h = 4, 4 # grid size
-    bot = Bot(env=GridWorld(w, h), T = 3)
+    bot = Bot(env=GridWorld(w, h), T =8)
     print(bot.env) # draw the grid
     accuracy_thresh = .001
     gamma = 1
@@ -212,6 +230,8 @@ def main():
     print("Value estimations:", v)
     print()
     print(bot.env) # draw the grid
+
+    print("All done :)")
 
 
 if __name__ == "__main__":
