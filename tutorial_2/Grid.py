@@ -43,6 +43,22 @@ class Grid:
     def draw(self, *args, **kwargs):
         print(self.__str__(*args, **kwargs))
 
+    @staticmethod
+    def draw_grid(content:dict):
+        # content should be a dict where the keys are the positions and
+        # the values are the strings you want to print
+        out = ""
+        x_prev = None
+        for (x, y), value in content.items():
+            value = str(value)
+            if len(value) < 2: value = " " + value
+            if x_prev is not None:
+                if x > x_prev:
+                    out += "\n"
+            out += value + "  "
+            x_prev = x
+        print(out)
+
 
 if __name__ == "__main__":
     grid = Grid(10, 10)
