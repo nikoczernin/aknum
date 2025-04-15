@@ -8,36 +8,39 @@
 import numpy as np
 
 class Grid:
-    def __init__(self, width, height, hard_borders=True, default_item="-"):
-        self.width = width
-        self.height = height
+    def __init__(self, h, w, hard_borders=True, default_item="-"):
+        self.height = h
+        self.width = w
         self.default_item = default_item
-        # self.grid = [[self.default_item(self) for x in range(width)] for y in range(height)]
-        self.grid = np.empty((width, height), dtype=str)
-        for y in range(height):
-            for x in range(width):
-                self.grid[x, y] = default_item
+        self.grid = np.empty((h, w), dtype='<U10')
+        self.max_item_len = len(default_item)
+
+        for y in range(h):
+            for x in range(w):
+                self.grid[y, x] = default_item
         # allow leaving borders (if allowed this typically results in death)
         self.hard_borders = hard_borders
 
-    def put(self, item, x, y):
-        self.grid[x, y] = item
+    def set_max_item_length(self):
+        self.max_item_len = max(len(item) for item in self.grid.flat)
 
-    def get(self, x, y):
-        return self.grid[x, y]
+    def put(self, item, y, x):
+        self.grid[y, x] = item
+        self.set_max_item_length()
 
-    def pop(self, x, y):
-        self.grid[x, y] = self.default_item
+    def get(self, y, x):
+        return self.grid[y, x]
+
+    def pop(self, y, x):
+        self.grid[y, x] = self.default_item
+        self.set_max_item_length()
 
     def __str__(self, *items, rulers=True):
         out = ""
-        if rulers: out += "  " + "".join([f"  {i} " for i in range(self.width)]) + "\n"
-        for y in range(self.height):
-            if rulers: out += f"{y}   "
-            for x in range(self.width):
-                 out +=  str(self.get(x, y)) + "   "
-            out += "\n"
-        if rulers: out += "   "
+        cell_w = self.max_item_len
+        out += "   " + "  ".join(str(i).rjust(self.max_item_len) for i in range(self.grid.shape[1])) + "\n"
+        for y, row in enumerate(self.grid):
+            out += f"{y}  " + "  ".join(str(item).rjust(self.max_item_len) for item in row) + "\n"
         return out
 
     def draw(self, *args, **kwargs):
@@ -48,15 +51,16 @@ class Grid:
         # content should be a dict where the keys are the positions and
         # the values are the strings you want to print
         out = ""
-        x_prev = None
-        for (x, y), value in content.items():
+        y_prev = None
+        for (y, x), value in content.items():
             value = str(value)
+            # print(value)
             if len(value) < 2: value = " " + value
-            if x_prev is not None:
-                if x > x_prev:
+            if y_prev is not None:
+                if y > y_prev:
                     out += "\n"
             out += value + "  "
-            x_prev = x
+            y_prev = y
         print(out)
 
 

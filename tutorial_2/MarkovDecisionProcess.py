@@ -7,6 +7,8 @@
 from pprint import pprint
 from GridWorld import GridWorld
 from Bot import Bot
+from tutorial_2.FrozenLake import FrozenLake
+from tutorial_2.WindyGridWorld import WindyGridWorld
 
 
 class MarkovDecisionProcess():
@@ -75,8 +77,8 @@ class MarkovDecisionProcess():
             print()
 
     @staticmethod
-    def value_iteration(bot, accuracy_thresh, gamma):
-        print("Value Iteration")
+    def value_iteration(bot, accuracy_thresh, gamma, verbose=False):
+        print("Performing Value Iteration")
         v = {s: (0 if s not in bot.env.terminal_states else 0) for s in bot.env.states}
         for j in range(1000000):
             Delta = 0
@@ -100,14 +102,14 @@ class MarkovDecisionProcess():
             # action-value-function as a "key" (i.e. the thing that the max function uses to evaluate the values)
             best_action = max(bot.policy[s].keys(), key=lambda a: bot.action_value_fun_star(s, a, gamma, v))
             bot.policy_set_action(s, best_action)
-            print(f"State {s}: Best action = {best_action}")
+            if verbose: print(f"State {s}: Best action = {best_action}")
         return v
 
 
 
-def main():
-    w, h = 4, 4 # grid size
-    env = GridWorld(w, h, terminal_states=[(0, 0), (w-1, h-1)])
+def test_grid_world():
+    h, w = 4, 4 # grid size
+    env = GridWorld(h, w, terminal_states=[(0, 0), (h-1, w-1)], starting_state=(2, 1))
     bot = Bot(env=env, T = 4)
     print(bot.env) # draw the grid
     accuracy_thresh = .001
@@ -151,6 +153,46 @@ def main():
     # print(bot.env) # draw the grid
     print("All done :)")
 
+
+def test_windy_grid_world():
+    w, h = 10, 7 # grid size
+    wind_forces = [ # only vertical please
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (-1, 0),
+        (-1, 0),
+        (-1, 0),
+        (-2, 0),
+        (-2, 0),
+        (-1, 0),
+        (0, 0)
+    ]
+    env = WindyGridWorld(w, h, terminal_states=[(3, 7)], starting_state=(3, 0), forces=wind_forces)
+    print(env)
+    bot = Bot(env=env, T = 100)
+    v = MarkovDecisionProcess.value_iteration(bot, .001, 1)
+    bot.draw_v(v)
+    bot.draw_policy()
+
+
+def test_frozen_lake():
+    h, w = 4, 4
+    holes = [(3, 0), (1, 1), (1, 3), (2, 3)]
+    goals = [(3, 3)]
+    env = FrozenLake(h, w, goals, holes, (0, 0), slippery=False)
+    print(env)
+    bot = Bot(env=env, T = 100)
+    v = MarkovDecisionProcess.policy_iteration(bot, .001, 1)
+    bot.draw_v(v)
+    bot.draw_policy()
+
+
+def main():
+    pass
+    # test_grid_world()
+    # test_windy_grid_world()
+    test_frozen_lake()
 
 if __name__ == "__main__":
     main()

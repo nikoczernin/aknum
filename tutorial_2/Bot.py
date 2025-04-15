@@ -10,6 +10,9 @@
 
 import random
 from pprint import pprint
+
+import numpy as np
+
 from Environment import Environment
 
 class Bot():
@@ -99,7 +102,7 @@ class Bot():
         # print("\t"*t, "AVF:", s_t, a, t)
         # for all states s_t_1 that can result from using this action in this state s_t
         # which is this case is wuascht because the states are deterministic anyway
-        state_transition_probs = self.env.get_state_action_transition(s_t, a)
+        state_transition_probs = self.env.get_possible_outcomes(s_t, a)
         # the future possible rewards are computed recursively using the value function, that means
         # any future decisions are made with the policy rather than a fixed function
         return sum([prob * (self.env.get_reward(s_t, a, s_t_1) + gamma * self.value_fun(s_t_1, t + 1, gamma))
@@ -107,7 +110,7 @@ class Bot():
 
 
     def action_value_fun_star(self, s, a, gamma, v):
-        state_transition_probs = self.env.get_state_action_transition(s, a)
+        state_transition_probs = self.env.get_possible_outcomes(s, a)
         # if s_t_1 is a terminal state, its reward will be zero because were already at the goal
         # otherwise just return the optimal next action's expected reward discounted by gamma
         return sum([prob * (self.env.get_reward(s, a, s_t_1) + (gamma * v[s_t_1] if s_t_1 not in self.env.terminal_states else 0))
@@ -115,22 +118,27 @@ class Bot():
 
     def draw_v(self, v):
         self.env.grid.draw_grid(v)
+        print()
 
     def draw_policy(self):
+        print("Current policy")
         pi = {s:self.env.action_str(self.pick_action(s)) for s in self.policy.keys()}
         self.env.grid.draw_grid(pi)
+        print()
 
-    def episode(self, start=None, policy=None, epsilon=-1, verbose=False):
+    def episode(self, policy=None, epsilon=-1, verbose=False):
         # 1 episode should look like this: {S0, A0, R1, S1, A1, R2, ..., ST-1, AT-1, RT}
         if policy is None: policy = self.policy
-        s_t = start if start is not None else self.env.get_random_state(avoid_terminal_states=True)
+        s_t = self.env.starting_state
         transitions = []
         if verbose: print("Starting episode at", s_t)
         R, t = 0, 0
         for t in range(self.T):
             a = self.pick_action(s_t, epsilon=epsilon, policy=policy)
             # move into a new state
-            s_t_1 = self.env.apply_action(s_t, a)
+            outcomes_dict = self.env.get_possible_outcomes(s_t, a)
+            # the transition includes
+            s_t_1 = self.env.resolve_outcome(outcomes_dict)
             r = self.env.get_reward(s_t, a, s_t_1)
             R += r
             transitions.append((s_t, a, r, s_t_1))
@@ -142,3 +150,10 @@ class Bot():
             print("Total reward:", R)
             print()
         return R, t, transitions
+
+    def make_test_runs(self, k=100, *args, **kwargs):
+        print(f"Performing {k} test runs ...")
+        results = [self.episode(*args, **kwargs) for _ in range(k)]
+        print("Best reward:", np.max([x[0] for x in results]))
+        print("Mean reward:", np.mean([x[0] for x in results]))
+        print("Mean time-step of termination:", np.mean([x[1] for x in results]))
