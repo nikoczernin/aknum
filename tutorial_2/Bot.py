@@ -35,7 +35,7 @@ class Bot():
         # actions is also a list
         # give every action the same probability
         for s in self.env.state_generator():
-            pprint(s)
+            # pprint(s)
             possible_actions = [a for a in self.env.actions if (self.env.is_this_action_possible(s, a))]
             self.policy[s] = {}
             for a in self.env.actions:
@@ -79,7 +79,7 @@ class Bot():
             try:
                 max_prob = max(policy[s_t].values())
             except Exception as e:
-                pprint(policy)
+                # pprint(policy)
                 raise e
             # get all actions for this state that have the max probability
             best_keys = [k for k, v in policy[s_t].items() if v == max_prob]
@@ -131,27 +131,36 @@ class Bot():
         self.env.grid.draw_grid(pi)
         print()
 
-    def episode(self, policy=None, epsilon=-1, verbose=False):
+    def episode(self, policy=None, starting_state=None, epsilon=-1, verbose=False):
         # 1 episode should look like this: {S0, A0, R1, S1, A1, R2, ..., ST-1, AT-1, RT}
         if policy is None: policy = self.policy
         s_t = self.env.starting_state
         transitions = []
         if verbose: print("Starting episode at", s_t)
+        print()
         R, t = 0, 0
         for t in range(self.T):
+            self.env.print_state(s_t)
             # if S0 is already a terminal state, we still need to perform action A0 to get R1
-            # just dont make an action -> a = None
+            # just don't make an action -> a = None
             a = self.pick_action(s_t, epsilon=epsilon, policy=policy)
+            print("Picked action:", a)
             # move into a new state
             outcomes_dict = self.env.get_possible_outcomes(s_t, a)
             # the transition includes
             s_t_1 = self.env.resolve_outcome(outcomes_dict)
+            print()
+            print("This is where it is taking us")
+            print(s_t_1)
             r = self.env.get_reward(s_t, a, s_t_1)
+            print("Received reward", r)
+            print()
             R += r
             transitions.append((s_t, a, r, s_t_1))
-            s_t = s_t_1
-            if self.env.state_is_terminal(s_t) or s_t is None:
+            if self.env.state_is_terminal(s_t_1) or s_t_1 is None:
+                print(" ... quitting ...")
                 break
+            s_t = s_t_1
         if verbose:
             print("Finished episode at end-state", s_t)
             print("Total reward:", R)
@@ -168,5 +177,6 @@ class Bot():
 
 if __name__ == "__main__":
     env = BlackJack()
-    bot = Bot(env, T=1000)
+    env.set_start()
+    bot = Bot(env, T=3)
     bot.episode(verbose=True)

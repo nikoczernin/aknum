@@ -12,6 +12,7 @@ import numpy as np
 
 from GridWorld import GridWorld
 from Bot import Bot
+from tutorial_2.BlackJack import BlackJack
 from tutorial_2.CliffWalking import CliffWalking
 from tutorial_2.FrozenLake import FrozenLake
 from tutorial_2.WindyGridWorld import WindyGridWorld
@@ -119,7 +120,9 @@ def test_frozen_lake():
     epsilon = .3
     test(env, epsilon, num_episodes=10000)
 
-
+def test_blackjack():
+    # env = BlackJack()
+    pass
 
 
 def main():

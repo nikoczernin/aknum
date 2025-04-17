@@ -40,7 +40,7 @@ class GridWorld(Environment):
         self.height = h
         self.width = w
         self.terminal_states = terminal_states
-        self.starting_state = starting_state
+        self.set_start(starting_state)
         # OPTIONAL
         # Grid is a clas that draws a pretty grid with whatever items you put on them
         self.grid = Grid(self.height, self.width)

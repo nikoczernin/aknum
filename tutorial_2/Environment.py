@@ -6,6 +6,12 @@ class Environment():
     def __init__(self, actions):
         self.actions = actions
         self.rewards = {a: 0 for a in self.actions}
+        self.starting_state = None
+        self.terminal_states = []
+
+    def set_start(self, starting_state=None):
+        if starting_state is not None:
+            self.starting_state = starting_state
 
     def state_generator(self):
         pass
@@ -33,8 +39,12 @@ class Environment():
         pass
 
     # returns a dict: mapping from new_state to transition probability p(new_state, reward | state, action)
-    def get_possible_outcomes(self, state, action) -> dict:
-        pass
+    def get_possible_outcomes(self, state, action):
+        if action is None:
+            return None
+        new_state = self.apply_action(state, action)
+        return {new_state: 1}
+
 
     @staticmethod
     def resolve_outcome(outcomes_dict: dict):
