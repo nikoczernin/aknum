@@ -10,7 +10,7 @@ class FrozenLake(GridWorld):
         # put all cliff cells into the grid for visuals
         self.put_onto_grid({pos: "H" for pos in self.holes})
 
-    def get_reward(self, state:tuple, action:tuple, new_state:tuple):
+    def get_reward(self, state:tuple, action:tuple, new_state:tuple=None):
         # when you reach a goal, get a reward of 1
         if new_state in self.goals:
             return 1

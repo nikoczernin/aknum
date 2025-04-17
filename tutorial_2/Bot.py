@@ -32,7 +32,7 @@ class Bot():
         # states is a list of possible states
         # actions is also a list
         # give every action the same probability
-        for s in self.env.states:
+        for s in self.env.state_generator():
             possible_actions = [a for a in self.env.actions if (self.env.is_this_action_possible(s, a))]
             self.policy[s] = {}
             for a in self.env.actions:
@@ -72,7 +72,11 @@ class Bot():
             return random.choice(list(policy[s_t].keys()))
         else:
             # get the action with the highest probability given the current state from the policy
-            max_prob = max(policy[s_t].values())
+            try:
+                max_prob = max(policy[s_t].values())
+            except Exception as e:
+                pprint(policy)
+                raise e
             # get all actions for this state that have the max probability
             best_keys = [k for k, v in policy[s_t].items() if v == max_prob]
             # pick a random action from the most likely ones
@@ -91,15 +95,12 @@ class Bot():
             action_prob = self.policy[s_t][a]
             if action_prob: # > 0, otherwise no need to go deeper in the search tree here
                 action_reward = self.action_value_fun(s_t, a, t, gamma)
-                # print(action_reward, "->", action_reward*action_prob)
                 total_reward += action_reward * action_prob
         # return the sum of the expected reward in this state given the policy
-        # print("\t"*t, total_reward)
         return total_reward
 
 
     def action_value_fun(self, s_t, a, t, gamma):
-        # print("\t"*t, "AVF:", s_t, a, t)
         # for all states s_t_1 that can result from using this action in this state s_t
         # which is this case is wuascht because the states are deterministic anyway
         state_transition_probs = self.env.get_possible_outcomes(s_t, a)
@@ -143,7 +144,7 @@ class Bot():
             R += r
             transitions.append((s_t, a, r, s_t_1))
             s_t = s_t_1
-            if s_t in self.env.terminal_states:
+            if self.env.state_is_terminal(s_t):
                 break
         if verbose:
             print("Finished episode at", s_t)

@@ -2,7 +2,6 @@ from tutorial_2.GridWorld import GridWorld
 
 class WindyGridWorld(GridWorld):
     def __init__(self, h, w, terminal_states, starting_state, forces):
-        print("starting state", starting_state)
         super().__init__(h, w, terminal_states, starting_state)
         # forces should be an array of length w of integer values
         self.forces = forces
@@ -10,9 +9,8 @@ class WindyGridWorld(GridWorld):
         # use the GridWorld.action_mappings for this
         for x, f in enumerate(forces):
             for y in range(h):
-                # print(x, y, self.action_mappings[str(f)])
                 if (y, x) not in terminal_states + [starting_state]:
-                    self.put_onto_grid({(y, x): self.action_mappings[str(f)]})
+                    self.put_onto_grid({(y, x): GridWorld.action_mappings[str(f)]})
     # Apply action:
     # Similar to GridWorld, but also displace the agent
     def apply_action(self, state, action):

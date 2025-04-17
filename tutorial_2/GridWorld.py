@@ -28,34 +28,32 @@ class GridWorld(Environment):
     }
 
     def __init__(self, h, w, terminal_states, starting_state):
-        self.w, self.h = h, w
         # the actions are sorted in clockwise order
         actions = [(0, -1), #up
                    (1, 0), #right
                    (0, 1),  #down
                    (-1, 0) #left
                    ]
-        states = [(y, x) for y in range(h) for x in range(w) ]
         # initialize the superclass: Environment
-        super().__init__(actions, states, terminal_states, starting_state)
+        super().__init__(actions, starting_state)
         # define custom rewards, r for steps in a grid_world are a constant -1, but you can adjust this manually
-        self.width = w
         self.height = h
-
+        self.width = w
+        self.terminal_states = terminal_states
         # OPTIONAL
         # Grid is a clas that draws a pretty grid with whatever items you put on them
-        self.grid = Grid(h, w)
+        self.grid = Grid(self.height, self.width)
         # put the terminal state flags into the grid
         self.put_onto_grid({ts:"G" for ts in terminal_states})
         # also put the starting state in the grid
         self.grid.put("S", *starting_state)
 
     def state_generator(self):
-        for y in range(self.h):
-            for x in range(self.w):
+        for y in range(self.height):
+            for x in range(self.width):
                 yield y, x
 
-    def state_is_terminal(self, state):
+    def state_is_terminal(self, state) -> bool:
         if state in self.terminal_states:
             return True
 
@@ -64,7 +62,7 @@ class GridWorld(Environment):
             self.grid.put(value, *position)
 
     def is_this_out_of_bounds(self, y, x):
-        if x < 0 or x >= self.width or y < 0 or y >= self.height:
+        if int(x) < 0 or int(x) >= self.width or int(y) < 0 or int(y) >= self.height:
             return True
         return False
 
@@ -84,7 +82,7 @@ class GridWorld(Environment):
         new_state = self.apply_action(state, action)
         return {new_state: 1}
 
-    def get_reward(self, state, action, new_state=None):
+    def get_reward(self, state:tuple, action:tuple, new_state:tuple=None):
         return -1
 
     @staticmethod

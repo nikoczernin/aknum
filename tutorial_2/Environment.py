@@ -3,21 +3,29 @@ from pprint import pprint
 import random
 
 class Environment():
-    def __init__(self, actions, states, terminal_states, starting_state):
-        if not all(terminal_state in states for terminal_state in terminal_states):
-            raise ValueError("Terminal state must be in states list")
+    def __init__(self, actions, starting_state):
         self.actions = actions
-        self.states = states
-        self.terminal_states = terminal_states
         self.starting_state = starting_state
         self.rewards = {a: 0 for a in self.actions}
 
     def state_generator(self):
         pass
 
-    def get_random_state(self, avoid_terminal_states=True):
-        s = random.choice(self.states)
-        return self.get_random_state(True) if avoid_terminal_states and s in self.terminal_states else s
+    def terminal_state_generator(self) -> bool:
+        for state in self.state_generator():
+            if self.state_is_terminal(state):
+                yield state
+
+    def state_is_terminal(self, state) -> bool:
+        pass
+
+    @staticmethod
+    def get_random_state(states, states_to_avoid=None):
+        s = random.choice(states)
+        if states_to_avoid is not None:
+            if s in states_to_avoid:
+                s = Environment.get_random_state(states, states_to_avoid)
+        return s
 
     def is_this_action_possible(self, state, action) -> bool:
         return True if action in self.actions else False

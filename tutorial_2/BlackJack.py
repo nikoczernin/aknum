@@ -45,7 +45,7 @@ class BlackJack(Environment):
         print(len(terminal_states))
         # starting_state
         starting_state = (0, 0, 0, 0, 0)
-        super().__init__(actions, states, terminal_states, starting_state)
+        super().__init__(actions, starting_state)
 
     @staticmethod
     def get_value(value_sum, num_usable_aces):

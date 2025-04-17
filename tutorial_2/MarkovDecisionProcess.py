@@ -12,14 +12,19 @@ from tutorial_2.WindyGridWorld import WindyGridWorld
 
 
 class MarkovDecisionProcess():
+
+    @staticmethod
+    def init_v(env, default_value=0):
+        return {s: (default_value if not env.state_is_terminal(s) else 0) for s in env.state_generator()}
+
     @staticmethod
     def iterative_policy_evaluation(bot, accuracy_thresh, gamma):
         # initiate v: vector with the value q of the best possible action a in state s
         # initial values are random, except for terminal states, for them pick 0
-        v = {s: (0 if s not in bot.env.terminal_states else 0) for s in bot.env.states}
+        v = MarkovDecisionProcess.init_v(bot.env)
         while True:
             Delta = 0
-            for i, s in enumerate(bot.env.states):
+            for i, s in enumerate(bot.env.state_generator()):
                 # get the value w of the currently best action for state s
                 w = v[s]
                 # apply the Bellman function to iteratively find a better action's value
@@ -43,11 +48,11 @@ class MarkovDecisionProcess():
             # Policy Evaluation
             # initiate v: vector with the value q of the best possible action a in state s
             # initial values are random, except for terminal states, for them pick 0
-            v = {s: (0 if s not in bot.env.terminal_states else 0) for s in bot.env.states}
+            v = MarkovDecisionProcess.init_v(bot.env)
             while True:
                 Delta = 0
                 # for every possible state
-                for i, s in enumerate(bot.env.states):
+                for i, s in enumerate(bot.env.state_generator()):
                     # if s in self.env.terminal_states: continue # no need to do anything with the terminal states
                     w = v[s]
                     v[s] = bot.value_fun(s, 0, gamma)
@@ -56,9 +61,9 @@ class MarkovDecisionProcess():
                     break
             # Policy Improvement
             policyIsStable = True
-            for s in bot.env.states:
+            for s in bot.env.state_generator():
                 # skip terminal states
-                if s in bot.env.terminal_states: continue
+                if bot.env.state_is_terminal(s): continue
                 # if s in self.env.terminal_states: continue # no need to do anything with the terminal states
                 oldAction = bot.pick_action(s)
                 # set a new action for the policy
@@ -79,10 +84,10 @@ class MarkovDecisionProcess():
     @staticmethod
     def value_iteration(bot, accuracy_thresh, gamma, verbose=False):
         print("Performing Value Iteration")
-        v = {s: (0 if s not in bot.env.terminal_states else 0) for s in bot.env.states}
+        v = MarkovDecisionProcess.init_v(bot.env)
         for j in range(1000000):
             Delta = 0
-            for i, s in enumerate(bot.env.states):
+            for i, s in enumerate(bot.env.state_generator()):
                 # skip terminal states
                 if s in bot.env.terminal_states: continue
                 w = v[s]
@@ -93,9 +98,9 @@ class MarkovDecisionProcess():
             if Delta < accuracy_thresh:
                 break
         # Policy calculation
-        for i, s in enumerate(bot.env.states):
+        for i, s in enumerate(bot.env.state_generator()):
             # skip terminal states
-            if s in bot.env.terminal_states: continue
+            if bot.env.state_is_terminal(s): continue
             # set a new best action for the policy
             # pick the action that maximizes the action-value function
             # do that by picking the max value of the policy-keys (i.e. the actions) using the
@@ -155,7 +160,7 @@ def test_grid_world():
 
 
 def test_windy_grid_world():
-    w, h = 10, 7 # grid size
+    h, w = 7, 10 # grid size
     wind_forces = [ # only vertical please
         (0, 0),
         (0, 0),
@@ -168,7 +173,7 @@ def test_windy_grid_world():
         (-1, 0),
         (0, 0)
     ]
-    env = WindyGridWorld(w, h, terminal_states=[(3, 7)], starting_state=(3, 0), forces=wind_forces)
+    env = WindyGridWorld(h, w, terminal_states=[(3, 7)], starting_state=(3, 0), forces=wind_forces)
     print(env)
     bot = Bot(env=env, T = 100)
     v = MarkovDecisionProcess.value_iteration(bot, .001, 1)
@@ -190,8 +195,8 @@ def test_frozen_lake():
 
 def main():
     pass
-    # test_grid_world()
-    # test_windy_grid_world()
+    test_grid_world()
+    test_windy_grid_world()
     test_frozen_lake()
 
 if __name__ == "__main__":

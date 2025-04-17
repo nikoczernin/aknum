@@ -22,7 +22,7 @@ class CliffWalking(GridWorld):
             new_state = self.starting_state
         return new_state
 
-    def get_reward(self, state, action, new_state):
+    def get_reward(self, state, action, new_state=None):
         # if the agent steps onto a cliff and gets sent to the start, give him a penalty
         # new_state will never be a cliff, because apply_action instantly sends you to the start
         # this is a bias because this means that circling back ot the start without falling down
@@ -30,3 +30,4 @@ class CliffWalking(GridWorld):
         if new_state == self.starting_state:
             return self.penalty
         return -1
+

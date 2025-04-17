@@ -24,8 +24,13 @@ def MC_policy_control(bot: Bot, epsilon=.1, gamma=1, visit="first", off_policy=F
         behaviour_policy = bot.policy.copy()
     else: # on-policy: use the Bot's policy for the episodes, while also updating it
         behaviour_policy = bot.policy
-    q = {s:{a:0 for a in bot.env.actions} for s in bot.env.states}
-    returns = {s: {a: [] for a in bot.env.actions} for s in bot.env.states}
+
+    q = {}
+    returns = {}
+    for s in bot.env.state_generator():
+        q[s] = {a: 0 for a in bot.env.actions}
+        returns[s] = {a: [] for a in bot.env.actions}
+
     for k in range(num_episodes):
         # generate an episode
         R_k, t_k, transitions = bot.episode(epsilon=epsilon, policy=behaviour_policy)
@@ -76,8 +81,8 @@ def test(env, epsilon=.4, num_episodes=1000, off_policy=True):
 
 
 def test_grid_world():
-    w, h = 4, 4 # grid size
-    env = GridWorld(w, h, terminal_states=[(0, 0), (w-1, h-1)])
+    h, w = 4, 4 # grid size
+    env = GridWorld(h, w, terminal_states=[(0, 0), (w-1, h-1)], starting_state=(3, 2))
     epsilon = .1
     test(env, epsilon)
 
@@ -90,7 +95,7 @@ def test_windy_world():
         (-1, 0),
         (0, 0)
     ]
-    env = WindyGridWorld(w, h, terminal_states=[(2, 2)], starting_state=(0, 0), forces=wind_forces)
+    env = WindyGridWorld(h, w, terminal_states=[(2, 2)], starting_state=(0, 0), forces=wind_forces)
     epsilon = .5
     test(env, epsilon)
 
@@ -118,9 +123,9 @@ def test_frozen_lake():
 
 def main():
     pass
-    # test_grid_world()
-    # test_windy_world()
-    # test_cliff_walking()
+    test_grid_world()
+    test_windy_world()
+    test_cliff_walking()
     test_frozen_lake()
 
 if __name__ == '__main__':
