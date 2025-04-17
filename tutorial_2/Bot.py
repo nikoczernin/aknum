@@ -14,6 +14,8 @@ from pprint import pprint
 import numpy as np
 
 from Environment import Environment
+from tutorial_2.BlackJack import BlackJack
+
 
 class Bot():
     def __init__(self, env, T=10):
@@ -33,6 +35,7 @@ class Bot():
         # actions is also a list
         # give every action the same probability
         for s in self.env.state_generator():
+            pprint(s)
             possible_actions = [a for a in self.env.actions if (self.env.is_this_action_possible(s, a))]
             self.policy[s] = {}
             for a in self.env.actions:
@@ -63,9 +66,10 @@ class Bot():
     # function for picking the best action from a policy, draws are resolved randomly
     # you can supply an epsilon for epsilon greedy exploration-exploitation
     def pick_action(self, s_t, epsilon=-1, policy=None):
-        if policy is None: policy = self.policy
-        if s_t in self.env.terminal_states:
-            return
+        if policy is None:
+            policy = self.policy
+        if self.env.state_is_terminal(s_t):
+            return None
         # generate a random uniform number
         # if it is smaller than epsilon, we explore, otherwise we exploit normally
         if random.random() < epsilon:
@@ -135,6 +139,8 @@ class Bot():
         if verbose: print("Starting episode at", s_t)
         R, t = 0, 0
         for t in range(self.T):
+            # if S0 is already a terminal state, we still need to perform action A0 to get R1
+            # just dont make an action -> a = None
             a = self.pick_action(s_t, epsilon=epsilon, policy=policy)
             # move into a new state
             outcomes_dict = self.env.get_possible_outcomes(s_t, a)
@@ -144,10 +150,10 @@ class Bot():
             R += r
             transitions.append((s_t, a, r, s_t_1))
             s_t = s_t_1
-            if self.env.state_is_terminal(s_t):
+            if self.env.state_is_terminal(s_t) or s_t is None:
                 break
         if verbose:
-            print("Finished episode at", s_t)
+            print("Finished episode at end-state", s_t)
             print("Total reward:", R)
             print()
         return R, t, transitions
@@ -158,3 +164,9 @@ class Bot():
         print("Best reward:", np.max([x[0] for x in results]))
         print("Mean reward:", np.mean([x[0] for x in results]))
         print("Mean time-step of termination:", np.mean([x[1] for x in results]))
+
+
+if __name__ == "__main__":
+    env = BlackJack()
+    bot = Bot(env, T=1000)
+    bot.episode(verbose=True)

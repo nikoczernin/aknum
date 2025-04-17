@@ -64,6 +64,7 @@ def MC_policy_control(bot: Bot, epsilon=.1, gamma=1, visit="first", off_policy=F
 
 
 def test(env, epsilon=.4, num_episodes=1000, off_policy=True):
+    print(env)
     bot = Bot(env=env, T = 100)
     # print("Policy before policy control:")
     # pprint(bot.policy)
@@ -113,7 +114,7 @@ def test_frozen_lake():
     holes = [(3, 0), (1, 1), (1, 3), (2, 3)]
     goals = [(3, 3)]
     env = FrozenLake(h, w, goals, holes, (0, 0), slippery=True)
-    print(env)
+
     # test(env, epsilon=.5)
     epsilon = .3
     test(env, epsilon, num_episodes=10000)
@@ -123,10 +124,10 @@ def test_frozen_lake():
 
 def main():
     pass
-    test_grid_world()
-    test_windy_world()
+    # test_grid_world()
+    # test_windy_world()
     test_cliff_walking()
-    test_frozen_lake()
+    # test_frozen_lake()
 
 if __name__ == '__main__':
     main()

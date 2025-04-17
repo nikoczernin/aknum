@@ -3,9 +3,8 @@ from pprint import pprint
 import random
 
 class Environment():
-    def __init__(self, actions, starting_state):
+    def __init__(self, actions):
         self.actions = actions
-        self.starting_state = starting_state
         self.rewards = {a: 0 for a in self.actions}
 
     def state_generator(self):
@@ -39,7 +38,9 @@ class Environment():
 
     @staticmethod
     def resolve_outcome(outcomes_dict: dict):
-        # outcomes_dict is a dict mapping possible states to transition probabilities
+        if outcomes_dict is None:
+            return None
+        # outcomes_dict is a dict mapping possible outcome states to transition probabilities
         return random.choices(list(outcomes_dict.keys()), weights=list(outcomes_dict.values()))[0]
 
     def get_reward(self, state, action, new_state=None):

@@ -35,11 +35,12 @@ class GridWorld(Environment):
                    (-1, 0) #left
                    ]
         # initialize the superclass: Environment
-        super().__init__(actions, starting_state)
+        super().__init__(actions)
         # define custom rewards, r for steps in a grid_world are a constant -1, but you can adjust this manually
         self.height = h
         self.width = w
         self.terminal_states = terminal_states
+        self.starting_state = starting_state
         # OPTIONAL
         # Grid is a clas that draws a pretty grid with whatever items you put on them
         self.grid = Grid(self.height, self.width)
@@ -79,10 +80,16 @@ class GridWorld(Environment):
 
     # returns a dict: mapping from new_state to transition probability p(new_state, reward | state, action)
     def get_possible_outcomes(self, state, action):
+        if action is None:
+            return None
         new_state = self.apply_action(state, action)
         return {new_state: 1}
 
     def get_reward(self, state:tuple, action:tuple, new_state:tuple=None):
+        # if action and new_state are None, that means no action was taken, which means we already terminated
+        # in that case return the approprate reward of 0
+        if new_state is None and action is None:
+            return 0
         return -1
 
     @staticmethod
