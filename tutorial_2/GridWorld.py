@@ -50,6 +50,15 @@ class GridWorld(Environment):
         # also put the starting state in the grid
         self.grid.put("S", *starting_state)
 
+    def state_generator(self):
+        for y in range(self.h):
+            for x in range(self.w):
+                yield y, x
+
+    def state_is_terminal(self, state):
+        if state in self.terminal_states:
+            return True
+
     def put_onto_grid(self, position_value_mapping:dict):
         for position, value in position_value_mapping.items():
             self.grid.put(value, *position)
@@ -74,11 +83,6 @@ class GridWorld(Environment):
     def get_possible_outcomes(self, state, action):
         new_state = self.apply_action(state, action)
         return {new_state: 1}
-
-    @staticmethod
-    def resolve_outcome(outcomes_dict: dict):
-        # outcomes_dict is a dict mapping possible states to transition probabilities
-        return random.choices(list(outcomes_dict.keys()), weights=list(outcomes_dict.values()))[0]
 
     def get_reward(self, state, action, new_state=None):
         return -1
