@@ -151,6 +151,8 @@ class Bot():
     def episode(self, policy=None, epsilon=-1, verbose=False):
         # performs one episode following the given policy and returns outcome
         # input: policy (dict), epsilon (float), verbose (bool); output: tuple (total reward, steps, transitions)
+        # policy is an optional parameter, if none was given, use the Bot's own policy
+        # if a policy was passed, use it as the behavioural policy (good for off-policy stuff)
         # 1 episode should look like this: {S0, A0, R1, S1, A1, R2, ..., ST-1, AT-1, RT}
         if policy is None: policy = self.policy
         s_t = self.env.starting_state

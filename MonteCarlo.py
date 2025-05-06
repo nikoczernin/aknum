@@ -24,14 +24,17 @@ def MC_policy_control(bot: Bot, epsilon=.1, gamma=1, visit="first", off_policy=F
     else: # on-policy: use the Bot's policy for the episodes, while also updating it
         behaviour_policy = bot.policy
 
-    q = {}
+    # estimate q with Q
+    # Q is the action-value-function: maps from state to action to action-value
+    Q = {}
+    # dict: maps from state to action to a list of all returns received
     returns = {}
     for s in bot.env.state_generator():
-        q[s] = {a: 0.0 for a in bot.env.actions}
+        Q[s] = {a: 0.0 for a in bot.env.actions}
         returns[s] = {a: [] for a in bot.env.actions}
 
     for k in range(num_episodes):
-        if k % 500 == 0:
+        if k % num_episodes//10 == 0:
             print(f"Iteration {k}")#, end='\r')
 
         # generate an episode
@@ -46,21 +49,24 @@ def MC_policy_control(bot: Bot, epsilon=.1, gamma=1, visit="first", off_policy=F
             a_t = transitions[t][1]
             # for first visit MC, check if the state occurred before the current time-step, then save its return
             # for every visit MC, save its return anyway
+            # TODO: moch des effizienter indem nicht jedes verfickte Mal alle previous_transitions gecheckt werden
             if any(previous_transition[0] == s_t for previous_transition in transitions[:t]) or visit == "every":
                 # save g to the returns list for the current state and action
                 returns[s_t][a_t].append(g)
-                # update q, the state-value mapping
-                q[s_t][a_t] = np.mean(returns[s_t][a_t])
-                # get the action that leads to the maximum value in the current state according to q
+                # update Q, the state-value mapping
+                Q[s_t][a_t] = np.mean(returns[s_t][a_t])
+                # get the action that leads to the maximum value in the current state according to Q
                 # ties are broken randomly
                 a_optimal = random.choice([
-                    a for a, v in q[s_t].items()
-                    if v == max(q[s_t].values())
+                    a for a, v in Q[s_t].items()
+                    if v == max(Q[s_t].values())
                 ])
                 # update the Bot policy (not necessarily the behaviour_policy) for all actions in the current state
                 for a in bot.env.actions:
-                    bot.policy[s_t][a] = (1 - epsilon + epsilon/len(q[s_t])) if a_optimal == a else epsilon/len(q[s_t])
-
+                    bot.policy[s_t][a] = (1 - epsilon + epsilon/len(Q[s_t])) if a_optimal == a else epsilon/len(Q[s_t])
+    # compute v damit ich es so wie der markus plotten kann amk
+    v = {s: max(Q[s].values()) for s, a in Q.items()}
+    return bot.policy, v
 
 
 def test(env, epsilon=.4, num_episodes=1000, off_policy=True, verbose=False):
@@ -69,6 +75,7 @@ def test(env, epsilon=.4, num_episodes=1000, off_policy=True, verbose=False):
     # outputs: none (prints results)
     print("This is what the environment looks like:")
     print(env)
+
     bot = Bot(env=env, T = 100)
     # print("Policy before policy control:")
     # pprint(bot.policy)
@@ -77,16 +84,16 @@ def test(env, epsilon=.4, num_episodes=1000, off_policy=True, verbose=False):
     print()
     print("##### Performing policy control #####")
     print()
-    MC_policy_control(bot, epsilon=epsilon, off_policy=off_policy, num_episodes=num_episodes)
+    pi, v = MC_policy_control(bot, epsilon=epsilon, off_policy=off_policy, num_episodes=num_episodes)
     print("Policy after policy control:")
     bot.draw_policy()
     pprint(bot.policy)
     print()
     print()
-    # print("Value function after policy control:")
-    # bot.draw_v()
-    # print()
-    # print()
+    print("Value function after policy control:")
+    bot.draw_v(v)
+    print()
+    print()
     print("Make more test runs after policy control:")
     bot.make_test_runs(k=1000)
 
@@ -111,7 +118,9 @@ def test_windy_world():
     ]
     env = WindyGridWorld(h, w, terminal_states=[(2, 2)], starting_state=(0, 0), forces=wind_forces)
     epsilon = .5
-    test(env, epsilon)
+    test(env, epsilon, num_episodes=1000)
+
+
 
 
 def test_cliff_walking():
