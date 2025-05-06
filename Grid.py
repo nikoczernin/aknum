@@ -47,19 +47,27 @@ class Grid:
         print(self.__str__(*args, **kwargs))
 
     @staticmethod
-    def draw_grid(content:dict):
+    def draw_grid(content:dict, round_to=None):
         # content should be a dict where the keys are the positions and
         # the values are the strings you want to print
+        if round_to is not None:
+            for key, value in content.items():
+                if isinstance(value, float):
+                    content[key] = round(value, round_to)
+        # compute the max cell width and cap it with the round_to if given
+        max_cell_width = max(len(str(v)) for v in content.values())
         out = ""
-        y_prev = None
+        y_prev = None # previous row number
         for (y, x), value in content.items():
+            # turn the current value into a string
             value = str(value)
-            # print(value)
-            if len(value) < 2: value = " " + value
+            # if the string is too short, pad it with whitespace
+            while len(value) < max_cell_width: value = " " + value
             if y_prev is not None:
                 if y > y_prev:
                     out += "\n"
             out += value + "  "
+            # move the previous row number
             y_prev = y
         print(out)
 

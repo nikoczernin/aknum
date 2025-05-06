@@ -34,8 +34,8 @@ def MC_policy_control(bot: Bot, epsilon=.1, gamma=1, visit="first", off_policy=F
         returns[s] = {a: [] for a in bot.env.actions}
 
     for k in range(num_episodes):
-        if k % num_episodes//10 == 0:
-            print(f"Iteration {k}")#, end='\r')
+        if k % (num_episodes//10) == 0:
+            print(f"Iteration {k}")
 
         # generate an episode
         R_k, t_k, transitions = bot.episode(epsilon=epsilon, policy=behaviour_policy)
@@ -64,6 +64,7 @@ def MC_policy_control(bot: Bot, epsilon=.1, gamma=1, visit="first", off_policy=F
                 # update the Bot policy (not necessarily the behaviour_policy) for all actions in the current state
                 for a in bot.env.actions:
                     bot.policy[s_t][a] = (1 - epsilon + epsilon/len(Q[s_t])) if a_optimal == a else epsilon/len(Q[s_t])
+    print()
     # compute v damit ich es so wie der markus plotten kann amk
     v = {s: max(Q[s].values()) for s, a in Q.items()}
     return bot.policy, v
@@ -75,7 +76,6 @@ def test(env, epsilon=.4, num_episodes=1000, off_policy=True, verbose=False):
     # outputs: none (prints results)
     print("This is what the environment looks like:")
     print(env)
-
     bot = Bot(env=env, T = 100)
     # print("Policy before policy control:")
     # pprint(bot.policy)
@@ -83,10 +83,10 @@ def test(env, epsilon=.4, num_episodes=1000, off_policy=True, verbose=False):
     bot.make_test_runs(k=1000, verbose=verbose)
     print()
     print("##### Performing policy control #####")
-    print()
     pi, v = MC_policy_control(bot, epsilon=epsilon, off_policy=off_policy, num_episodes=num_episodes)
     print("Policy after policy control:")
     bot.draw_policy()
+    print("Full policy after policy control:")
     pprint(bot.policy)
     print()
     print()
@@ -137,38 +137,50 @@ def test_frozen_lake():
     h, w = 4, 4
     holes = [(3, 0), (1, 1), (1, 3), (2, 3)]
     goals = [(3, 3)]
-    env = FrozenLake(h, w, goals, holes, (0, 0), slippery=True)
-
-    # test(env, epsilon=.5)
+    print("Testing frozen lake WITHOUT slippery")
+    env = FrozenLake(h, w, goals, holes, (0, 0), slippery=False)
     epsilon = .3
-    test(env, epsilon, num_episodes=10000)
+    num_episodes = 1000
+    test(env, epsilon, num_episodes=num_episodes)
 
-# def test_blackjack():
-#     # tests Monte Carlo control on blackjack environment
-#     env = BlackJack()
-#     epsilon = .5
-#     verbose = False
-#     bot = Bot(env=env, T = 20)
-#     # print("Policy before policy control:")
-#     # pprint(bot.policy)
-#     print("Now we run some episodes and see what we get (before optimizing the policy):")
-#     bot.make_test_runs(k=100, verbose=verbose)
-#     print()
-#     print("##### Performing policy control #####")
-#     print()
-#     MC_policy_control(bot, epsilon=epsilon, off_policy=True, num_episodes=1000)
-#     # print("Policy after policy control:")
-#     # pprint(bot.policy)
-#     bot.make_test_runs(k=100)
+    print("Testing frozen lake WITH slippery")
+    env = FrozenLake(h, w, goals, holes, (0, 0), slippery=False)
+    epsilon = .3
+    test(env, epsilon, num_episodes=num_episodes)
+
+
+
+def test_blackjack():
+    # tests Monte Carlo control on blackjack environment
+    env = BlackJack()
+    epsilon = .5
+    verbose = False
+    bot = Bot(env=env, T = 20)
+    # print("Policy before policy control:")
+    # pprint(bot.policy)
+    print("Now we run some episodes and see what we get (before optimizing the policy):")
+    bot.make_test_runs(k=100, verbose=verbose)
+    print()
+    print("##### Performing policy control #####")
+    print()
+    MC_policy_control(bot, epsilon=epsilon, off_policy=True, num_episodes=100000)
+    # print("Policy after policy control:")
+    # pprint(bot.policy)
+    bot.make_test_runs(k=100)
+    print()
+    print("##### Performing a single episode with the new policy #####")
+    bot.episode(verbose=True)
+
 
 
 
 def main():
     pass
-    test_grid_world()
+    # test_grid_world()
     # test_windy_world()
     # test_cliff_walking()
-    # test_frozen_lake()
+    test_frozen_lake()
+    # test_blackjack()
 
 if __name__ == '__main__':
     main()

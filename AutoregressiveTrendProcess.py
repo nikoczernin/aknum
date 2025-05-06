@@ -90,4 +90,4 @@ if __name__ == "__main__":
     env.print_state(s)
     print("Rewards: ", rewards)
     plot_line_graph(env.prices, rewards, labels=["Prices", "Rewards"], title="")
-    # plot_line_graph()
+    plot_line_graph()

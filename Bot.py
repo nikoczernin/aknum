@@ -68,7 +68,8 @@ class Bot():
         # generate a random uniform number
         # if it is smaller than epsilon, we explore, otherwise we exploit normally
         if random.random() < epsilon:
-            return random.choice(list(policy[s_t].keys()))
+            # do not pick any impossible action though
+            return random.choice(list(a for a in policy[s_t].keys() if self.env.is_this_action_possible(s_t, a)))
         else:
             # get the action with the highest probability given the current state from the policy
             max_prob = max(policy[s_t].values())
@@ -77,6 +78,7 @@ class Bot():
             # pick a random action from the most likely ones
             chosen_key = random.choice(best_keys)
             return chosen_key
+
 
     def value_fun(self, s_t, t, gamma):
         # computes the value function recursively based on the current policy
@@ -137,7 +139,7 @@ class Bot():
     def draw_v(self, v):
         # draws the grid with the current value function v
         # input: v (dict); output: none
-        self.env.grid.draw_grid(v)
+        self.env.grid.draw_grid(v, round_to=2)
         print()
 
     def draw_policy(self):
@@ -157,15 +159,14 @@ class Bot():
         if policy is None: policy = self.policy
         s_t = self.env.starting_state
         transitions = []
-        if verbose: print("Starting episode at state:")
-        if verbose: print(s_t)
+        if verbose: print("Starting episode:")
         R, t = 0, 0
         for t in range(self.T):
-            if verbose: print(s_t)
+            if verbose: print(f"t_{t}: {s_t}")
             # if S0 is already a terminal state, we still need to perform action A0 to get R1
             # just don't make an action -> a = None
             a = self.pick_action(s_t, epsilon=epsilon, policy=policy)
-            if verbose: print("Picked action:", a)
+            if verbose: print(f"a_{t}:", a)
             # move into a new state
             outcomes_dict = self.env.get_possible_outcomes(s_t, a)
             # the transition includes
@@ -174,6 +175,7 @@ class Bot():
             R += r
             transitions.append((s_t, a, r, s_t_1))
             s_t = s_t_1
+            # if verbose: print()
             if self.env.state_is_terminal(s_t) or s_t is None:
                 break
         if verbose:
@@ -197,4 +199,5 @@ if __name__ == "__main__":
     env = BlackJack()
     env.set_start()
     bot = Bot(env, T=20)
+    bot.episode(verbose=True)
     bot.episode(verbose=True)

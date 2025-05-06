@@ -24,19 +24,21 @@ class Environment():
     def state_generator(self):
         # Generator for all possible states
         # input/output: none (to be overridden by subclass)
-        yield self.starting_state
+        # yield ...
+        raise NotImplementedError()
 
-    def terminal_state_generator(self) -> bool:
+    def terminal_state_generator(self):
         # Yields only terminal states from the full state set
         for state in self.state_generator():
             if self.state_is_terminal(state):
-                yield state
+                # yield ...
+                raise NotImplementedError()
 
     def state_is_terminal(self, state) -> bool:
         # Checks if a state is terminal
         # input: state - any state
         # output: bool
-        pass
+        raise NotImplementedError()
 
     @staticmethod
     def get_random_state(states, states_to_avoid=None):
@@ -59,7 +61,7 @@ class Environment():
         # Computes next state from applying action in current state
         # input: state, action
         # output: new_state (to be overridden)
-        pass
+        raise NotImplementedError()
 
     def get_possible_outcomes(self, state, action):
         # Returns dict of outcome states mapped to transition probabilities
@@ -67,6 +69,7 @@ class Environment():
         # output: dict {new_state: prob}
         if action is None:
             return
+        return {self.apply_action(state, action):1}
 
     def resolve_outcome(self, outcomes:dict):
         # from all possible outcomes (keys) pick one with the given probabilities (values)
