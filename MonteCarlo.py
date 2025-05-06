@@ -1,26 +1,24 @@
-# ===================================================
-# Author: Nikolaus Czernin
-# Script: Off-Policy Monte Carlo Control for GridWorld
-# Description: Implements MC control for a 4×4 grid world using both on-policy and off-policy
-#              learning. Uses ε-greedy policies, returns tracking, and value updates to
-#              estimate the optimal policy π* via Monte Carlo sampling.
-# ===================================================
-from email import policy
+# Off- and On-Policy Monte Carlo Control for GridWorld
+# Implements MC control for a 4×4 grid world using both on-policy and off-policy
+# learning. Uses ε-greedy policies, returns tracking, and value updates to
+# estimate the optimal policy π* via Monte Carlo sampling.
+
 from pprint import pprint
 import random
 import numpy as np
 
 from GridWorld import GridWorld
 from Bot import Bot
-from tutorial_2.BlackJack import BlackJack
-from tutorial_2.CliffWalking import CliffWalking
-from tutorial_2.FrozenLake import FrozenLake
-from tutorial_2.WindyGridWorld import WindyGridWorld
+from BlackJack import BlackJack
+from CliffWalking import CliffWalking
+from FrozenLake import FrozenLake
+from WindyGridWorld import WindyGridWorld
 
 
 def MC_policy_control(bot: Bot, epsilon=.1, gamma=1, visit="first", off_policy=False, behaviour_policy=None, num_episodes=1000):
-    # if we are working off policy, the behaviour_policy is a copy of the bot policy
-    # that will not be updated during the episodes
+    # performs Monte Carlo policy control (on-policy or off-policy)
+    # inputs: bot (Bot), epsilon (float), gamma (float), visit (str), off_policy (bool), behaviour_policy (dict), num_episodes (int)
+    # outputs: none (updates bot.policy in place)
     if off_policy:
         behaviour_policy = bot.policy.copy()
     else: # on-policy: use the Bot's policy for the episodes, while also updating it
@@ -29,15 +27,16 @@ def MC_policy_control(bot: Bot, epsilon=.1, gamma=1, visit="first", off_policy=F
     q = {}
     returns = {}
     for s in bot.env.state_generator():
-        q[s] = {a: 0 for a in bot.env.actions}
+        q[s] = {a: 0.0 for a in bot.env.actions}
         returns[s] = {a: [] for a in bot.env.actions}
 
     for k in range(num_episodes):
+        if k % 500 == 0:
+            print(f"Iteration {k}")#, end='\r')
+
         # generate an episode
         R_k, t_k, transitions = bot.episode(epsilon=epsilon, policy=behaviour_policy)
-        # print("Length of episode:", t_k)
         # transitions looks like this: [(S0, A0, R1, S1), (S1, A1, R2, S2), ..., (ST-1, AT-1, RT, _)]
-        # pprint(transitions)
         g = 0
         # iterate over sequence backwards!
         for t in range(len(transitions)-1, -1, -1):
@@ -64,13 +63,17 @@ def MC_policy_control(bot: Bot, epsilon=.1, gamma=1, visit="first", off_policy=F
 
 
 
-def test(env, epsilon=.4, num_episodes=1000, off_policy=True):
+def test(env, epsilon=.4, num_episodes=1000, off_policy=True, verbose=False):
+    # tests the environment by running episodes and policy optimization
+    # inputs: env (Environment), epsilon (float), num_episodes (int), off_policy (bool), verbose (bool)
+    # outputs: none (prints results)
+    print("This is what the environment looks like:")
     print(env)
     bot = Bot(env=env, T = 100)
     # print("Policy before policy control:")
     # pprint(bot.policy)
     print("Now we run some episodes and see what we get (before optimizing the policy):")
-    bot.make_test_runs(k=1000)
+    bot.make_test_runs(k=1000, verbose=verbose)
     print()
     print("##### Performing policy control #####")
     print()
@@ -78,18 +81,27 @@ def test(env, epsilon=.4, num_episodes=1000, off_policy=True):
     print("Policy after policy control:")
     bot.draw_policy()
     pprint(bot.policy)
+    print()
+    print()
+    # print("Value function after policy control:")
+    # bot.draw_v()
+    # print()
+    # print()
+    print("Make more test runs after policy control:")
     bot.make_test_runs(k=1000)
 
 
 
 def test_grid_world():
+    # tests Monte Carlo control on standard gridworld
     h, w = 4, 4 # grid size
-    env = GridWorld(h, w, terminal_states=[(0, 0), (w-1, h-1)], starting_state=(3, 2))
+    env = GridWorld(h, w, terminal_states=[(0, 0), (w-1, h-1)], starting_state=(2, 1))
     epsilon = .1
     test(env, epsilon)
 
 
 def test_windy_world():
+    # tests Monte Carlo control on windy gridworld
     h, w = 4, 4
     wind_forces = [ # only vertical please
         (0, 0),
@@ -103,6 +115,7 @@ def test_windy_world():
 
 
 def test_cliff_walking():
+    # tests Monte Carlo control on cliff walking scenario
     h, w = 4, 5
     cliffs = [(1, 1), (1, 2), (1, 3)]
     env = CliffWalking(h, w, terminal_states=[(1, 4)], starting_state=(1, 0), cliffs=cliffs)
@@ -111,6 +124,7 @@ def test_cliff_walking():
 
 
 def test_frozen_lake():
+    # tests Monte Carlo control on frozen lake scenario
     h, w = 4, 4
     holes = [(3, 0), (1, 1), (1, 3), (2, 3)]
     goals = [(3, 3)]
@@ -120,16 +134,31 @@ def test_frozen_lake():
     epsilon = .3
     test(env, epsilon, num_episodes=10000)
 
-def test_blackjack():
-    # env = BlackJack()
-    pass
+# def test_blackjack():
+#     # tests Monte Carlo control on blackjack environment
+#     env = BlackJack()
+#     epsilon = .5
+#     verbose = False
+#     bot = Bot(env=env, T = 20)
+#     # print("Policy before policy control:")
+#     # pprint(bot.policy)
+#     print("Now we run some episodes and see what we get (before optimizing the policy):")
+#     bot.make_test_runs(k=100, verbose=verbose)
+#     print()
+#     print("##### Performing policy control #####")
+#     print()
+#     MC_policy_control(bot, epsilon=epsilon, off_policy=True, num_episodes=1000)
+#     # print("Policy after policy control:")
+#     # pprint(bot.policy)
+#     bot.make_test_runs(k=100)
+
 
 
 def main():
     pass
-    # test_grid_world()
+    test_grid_world()
     # test_windy_world()
-    test_cliff_walking()
+    # test_cliff_walking()
     # test_frozen_lake()
 
 if __name__ == '__main__':

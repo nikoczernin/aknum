@@ -1,7 +1,10 @@
+# Environment subclass for simulating Blackjack in a reinforcement learning context.
+# Implements custom state representation, card drawing, player/dealer logic,
+# action transitions, and game termination based on Blackjack rules.
+
+
 from pprint import pprint
 import random
-
-from pyparsing import actions
 
 from Environment import Environment
 
@@ -9,6 +12,7 @@ class BlackJack(Environment):
     # 1 can be an 11 if wanted
     cards = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10]
     def __init__(self):
+        # initializes Blackjack environment with action set and resets game
         blackjack_actions = ["hit", "stick"]
         # States
         # {
@@ -24,11 +28,14 @@ class BlackJack(Environment):
         # we don't precompute all possible states, rather we exploit state generators here
         # Starting_state
         super().__init__(blackjack_actions)
-        self.starting_state = BlackJack.reset_game()
+        self.dealers_hidden_value = None
+        self.dealers_hidden_aces = None
+        self.starting_state = self.reset_game()
 
     @staticmethod
     def get_value(value_sum, num_usable_aces):
-        # print(f"Computing value from a total of {value_sum} and {num_usable_aces} aces")
+        # computes the actual value of a hand considering usable aces
+        # input: value_sum (int), num_usable_aces (int); output: int
         # for every usable ace
         for i in range(num_usable_aces):
             # any 1 is a usable ace
@@ -41,18 +48,22 @@ class BlackJack(Environment):
 
     @staticmethod
     def draw_card():
+        # randomly draws one card from the Blackjack deck
         return random.choice(BlackJack.cards)
 
-    @staticmethod
-    def reset_game():
+    def reset_game(self):
+        # reset the hidden states values
+        self.dealers_hidden_value = 0
+        self.dealers_hidden_aces = 0
         # generate a single state, set all its values to zero and return it
         return 0, 0, 0, 0, 0, 0
 
     def set_start(self, starting_state=None):
+        # sets the starting state of the environment, draws cards if none given
         print("Setting starting state of BlackJack")
         if starting_state is None:
             # start with a zero-state
-            state = list(BlackJack.reset_game())
+            state = list(self.reset_game())
             # Player gets his first card
             # Player gets his second card
             for i in range(2):
@@ -74,16 +85,20 @@ class BlackJack(Environment):
 
     @staticmethod
     def state_generator():
-        for pv in range(1, 31): # player_value
-            for pa in range(0, 2): # player_aces
+        # generates all valid state combinations of the Blackjack environment
+        for pv in range(0, 50): # player_value
+            for pa in range(0, 12): # player_aces
+                if pa > pv: continue # you cannot have any aces with a sum of 0
                 for ps in range(2): # player_sticks
-                    for df in range(1, 12): # dealer_facing_value
-                        for dh in range(1, 27): # dealer_hidden_card
+                    for df in range(0, 12): # dealer_facing_value
+                        for dh in range(0, 27): # dealer_hidden_card
+                            if not df and dh: continue # dealer gains open card before hidden ones
                             for ds in range(2): # dealer_sticks
                                 yield pv, pa, ps, df, dh, ds
 
     @staticmethod
     def print_state(state):
+        # prints individual components of a state in readable format
         print("(0) player value:", state[0])
         print("(1) player aces:", state[1])
         print("(2) player sticks:", state[2])
@@ -93,8 +108,8 @@ class BlackJack(Environment):
         print()
     
     @staticmethod
-    def state_is_terminal(state):
-        # if both players stick, terminate
+    def state_is_terminal(state) -> bool:
+        # returns True if both players have chosen to stick
         # print("State:", state)
         if state[2] and state[5]:
             return True
@@ -102,36 +117,31 @@ class BlackJack(Environment):
             # otherwise you can keep playing ...
             return False
 
-    @staticmethod
-    def dealer_turn(state):
+    def dealer_turn(self, state):
+        # performs one dealer move (hit or stick)
         state = list(state)
-        # state: a state dict that you're allowed to permute
-        # if BlackJack.get_value(state[3] + state[4], state[5]) >= 17:
-        #     state[5] = 1
-        # else:
-        #     new_card = BlackJack.draw_card()
-        #     state[4] += new_card
-        #     if new_card == 1: state[5] += 1
-        # if the dealer takes a turn, i.e. he did not stick yet
-        # compute the dealer value to find out what he has
         # he sticks if his value >= 17,
-        if BlackJack.get_dealer_value(state[3], state[4]) >= 17:
-            print("The dealer is gonna stick")
+        if self.get_dealer_value(state[3]) >= 17:
+            # print("The dealer is gonna stick")
             state[5] = 1
         # otherwise he hits (he draws another hidden card)
         else:
-            print("The dealer is gonna hit")
-            state[4] += 1
+            # print("The dealer is gonna hit")
+            new_card = BlackJack.draw_card()
+            state[4] += 1 # increase the hidden card counter
+            self.dealers_hidden_value += new_card
+            self.dealers_hidden_aces += new_card == 1
         return tuple(state)
 
     def is_this_action_possible(self, state, action) -> bool:
-        if action == "hit" and BlackJack.get_value(state[0], state[1]) >= 21:
+        # determines if a given action is legal in the current state
+        if action == "hit" and self.get_value(state[0], state[1]) >= 21:
                 return False
         return True
 
 
-
-    def apply_action(self, state:dict, action:str) -> dict:
+    def apply_action(self, state:tuple, action:str) -> tuple:
+        # applies a player's action and returns the resulting state
         # # if the game just started, i.e. both players have 0 values, make each of them draw 2 cards
         # # for this there is the function BlackJack.start_game
         # if state == self.starting_state:
@@ -140,8 +150,10 @@ class BlackJack(Environment):
         new_state = list(state)
         #### PLAYER TURN ####
         if action == "hit":
+            # print("Entry state", state)
             # draw another card
             new_card = BlackJack.draw_card()
+            # print("New card", new_card)
             new_state[0] = state[0] + new_card
             if new_card == 1: new_state[1] += 1
             # if the player now has 21, he doesn't automatically win,
@@ -151,9 +163,9 @@ class BlackJack(Environment):
 
             #### DEALER TURN ####
             # let the dealer play a single turn, because after him the player gets another turn
-            # the dealer only plays if he didnt stick yet though
+            # the dealer only plays if he didn't stick yet though
             if not new_state[5]:
-                new_state = BlackJack.dealer_turn(new_state)
+                new_state = self.dealer_turn(new_state)
             #### DEALER TURN OVER ####
 
         elif action == "stick":
@@ -169,39 +181,27 @@ class BlackJack(Environment):
                 # should agents have full search tree w possible actions to consider,
                 # although they're paralyzed after sticking?
                 while not new_state[5]:
-                    new_state = BlackJack.dealer_turn(new_state)
+                    new_state = self.dealer_turn(new_state)
                 #### DEALER TURN OVER ####
-
+        # print("New state", new_state)
         return tuple(new_state)
 
-    # # returns a dict: mapping from new_state to transition probability p(new_state, reward | state, action)
-    # @staticmethod
-    # def get_possible_outcomes(state, action) -> dict:
-    #     # TODO: compute all possible outcomes to a state and its probabilities
-    #     # to get all possible future states, iterate over ALL possible states S using the state_generator
-    #     all_possible_next_states = []
-    #     for next_state in BlackJack.state_generator():
-    #         # if we stick, all future states have the same first 3 values, the other may increase
-    #         if action == "stick":
-    #             if state[:3] == next_state[:3]:
-    #                 if state[3] <= next_state[3] and state[4] <= next_state[4] and state[5] <= next_state[5]:
-    #                     all_possible_next_states.append(next_state)
-    #         # if we hit, all state values must increase for future states
-    #         if state[0] <= next_state[0] and state[1] <= next_state[1] and state[2] <= next_state[2]:
-    #             if state[3] <= next_state[3] and state[4] <= next_state[4] and state[5] <= next_state[5]:
-    #                     all_possible_next_states.append(next_state)
-    #     # each future state's probability is probably not equal, but i will work with that now though
-    #     return {p:1/len(all_possible_next_states) for p in all_possible_next_states}
+    # returns a dict: mapping from new_state to transition probability p(new_state, reward | state, action)
+    def get_possible_outcomes(self, state, action) -> dict:
+        # compute all possible outcomes to a state and its probabilities
+        pass
 
-    @staticmethod
-    def get_reward(state, action, new_state):
+
+    def get_reward(self, state, action, new_state):
+        # calculates reward based on terminal outcome
+        # returns: 1 (win), -1 (loss), or 0 (draw or ongoing)
         # if the state is terminal
         # -> both player either stick, whatever the reason
         # the dealer behaviour and policy handle why both stick
         if BlackJack.state_is_terminal(new_state):
-            print("This bitch is terminal!")
             player_value = BlackJack.get_value(new_state[0], new_state[1])
-            dealer_value = BlackJack.get_value(new_state[3] + new_state[4], new_state[5])
+            dealer_value = self.get_dealer_value(new_state[3])
+            # print("Final scores:", player_value, "---", dealer_value)
             # Player wins if
             # his value is larger than that of the dealer and the did not go bust
             # or if the player did not go bust but the dealer did
@@ -216,39 +216,12 @@ class BlackJack(Environment):
         # or both went bust
         return 0
 
-
-    @staticmethod
-    def get_dealer_value(dealer_facing_value, dealer_hidden_cards):
+    def get_dealer_value(self, dealer_facing_value):
+        # computes the full dealer hand value including hidden cards
+        # this is an extra function because the dealers hand is also dependent on the hidden state
         # dealer_facing_value: value of the card face-up
         # dealer_hidden_cards: number of hidden cards the dealer was hit with
-        # generate a random total value using the predetermined open obvervable card
-        # plus the value of the known number of unknown unobservable cards values
-        # since they are unknown and random, you can resample everytime
-        # careful: if you resample the last turns card and the dealer did not stick that turn, he must not stick now
-        # initiate the total as the value of the face-up card
-        dealer_total = dealer_facing_value
-        # print("Start with", dealer_total)
-        # print()
-        # also count aces
-        dealer_aces = dealer_facing_value == 1
-        i = 0
-        # for every card the dealer has drawn
-        while i < dealer_hidden_cards:
-            # generate a new card value
-            new_card = BlackJack.draw_card()
-            # print("New card:", new_card)
-            # if this is not the last card and it would case a go bust
-            if i+1 < dealer_hidden_cards and BlackJack.get_value(dealer_total + new_card, dealer_aces + new_card==1) > 21:
-                # restart this iteration
-                # print("\tWe will skip this card")
-                continue
-            # otherwise keep this card
-            # print("\tWe keep this card")
-            # print()
-            dealer_total = dealer_total + new_card
-            dealer_aces += new_card == 1
-            i += 1
-        return BlackJack.get_value(dealer_total, dealer_aces)
+        return BlackJack.get_value(dealer_facing_value + self.dealers_hidden_value, self.dealers_hidden_aces)
 
 
 if __name__ == "__main__":

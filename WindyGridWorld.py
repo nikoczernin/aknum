@@ -1,7 +1,15 @@
-from tutorial_2.GridWorld import GridWorld
+from GridWorld import GridWorld
 
 class WindyGridWorld(GridWorld):
     def __init__(self, h, w, terminal_states, starting_state, forces):
+        # Initializes WindyGridWorld, a GridWorld with wind forces influencing movement.
+        # Inputs:
+        #   h (int): Grid height
+        #   w (int): Grid width
+        #   terminal_states (list): List of terminal state coordinates
+        #   starting_state (tuple): Starting position of the agent
+        #   forces (list): Wind force vectors for each column, length should match grid width
+        # Output: None
         super().__init__(h, w, terminal_states, starting_state)
         # forces should be an array of length w of integer values
         self.forces = forces
@@ -11,9 +19,14 @@ class WindyGridWorld(GridWorld):
             for y in range(h):
                 if (y, x) not in terminal_states + [starting_state]:
                     self.put_onto_grid({(y, x): GridWorld.action_mappings[str(f)]})
-    # Apply action:
-    # Similar to GridWorld, but also displace the agent
+
     def apply_action(self, state, action):
+        # Computes the new state after applying an action and wind force.
+        # Inputs:
+        #   state (tuple): Current position of the agent
+        #   action (tuple): Action the agent wants to perform
+        # Output:
+        #   tuple: New position after considering action and wind force
         new_state = state[0] + action[0], state[1] + action[1]
         if self.is_this_out_of_bounds(*new_state):
             new_state = state
@@ -24,3 +37,8 @@ class WindyGridWorld(GridWorld):
             new_state_shifted = new_state
         return new_state_shifted
 
+
+
+if __name__ == "__main__":
+    from MonteCarlo import test_windy_world
+    test_windy_world()

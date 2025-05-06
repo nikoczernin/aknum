@@ -4,11 +4,11 @@
 # Description:
 # ===================================================
 
-from pprint import pprint
 from GridWorld import GridWorld
 from Bot import Bot
-from tutorial_2.FrozenLake import FrozenLake
-from tutorial_2.WindyGridWorld import WindyGridWorld
+from BlackJack import BlackJack
+from FrozenLake import FrozenLake
+from WindyGridWorld import WindyGridWorld
 
 
 class MarkovDecisionProcess():
@@ -193,11 +193,22 @@ def test_frozen_lake():
     bot.draw_policy()
 
 
+def test_blackjack():
+    env = BlackJack()
+    print(env)
+    bot = Bot(env=env, T = 100)
+    v = MarkovDecisionProcess.value_iteration(bot, .001, 1)
+    print(v)
+    print(bot.policy[:50])
+
+
+
 def main():
     pass
-    test_grid_world()
-    test_windy_grid_world()
-    test_frozen_lake()
+    # test_grid_world()
+    # test_windy_grid_world()
+    # test_frozen_lake()
+    test_blackjack()
 
 if __name__ == "__main__":
     main()
