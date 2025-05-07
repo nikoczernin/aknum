@@ -99,15 +99,14 @@ def test(env, epsilon=.4, num_episodes=1000, off_policy=True, verbose=False):
 
 
 
-def test_grid_world():
+def test_grid_world(epsilon=0.1):
     # tests Monte Carlo control on standard gridworld
     h, w = 4, 4 # grid size
     env = GridWorld(h, w, terminal_states=[(0, 0), (w-1, h-1)], starting_state=(2, 1))
-    epsilon = .1
     test(env, epsilon)
 
 
-def test_windy_world():
+def test_windy_world(epsilon = .5):
     # tests Monte Carlo control on windy gridworld
     h, w = 4, 4
     wind_forces = [ # only vertical please
@@ -117,22 +116,20 @@ def test_windy_world():
         (0, 0)
     ]
     env = WindyGridWorld(h, w, terminal_states=[(2, 2)], starting_state=(0, 0), forces=wind_forces)
-    epsilon = .5
     test(env, epsilon, num_episodes=1000)
 
 
 
 
-def test_cliff_walking():
+def test_cliff_walking(epsilon = .6):
     # tests Monte Carlo control on cliff walking scenario
     h, w = 4, 5
     cliffs = [(1, 1), (1, 2), (1, 3)]
     env = CliffWalking(h, w, terminal_states=[(1, 4)], starting_state=(1, 0), cliffs=cliffs)
-    epsilon = .6
     test(env, epsilon)
 
 
-def test_frozen_lake():
+def test_frozen_lake(epsilon = .3):
     # tests Monte Carlo control on frozen lake scenario
     h, w = 4, 4
     holes = [(3, 0), (1, 1), (1, 3), (2, 3)]
@@ -145,15 +142,13 @@ def test_frozen_lake():
 
     print("Testing frozen lake WITH slippery")
     env = FrozenLake(h, w, goals, holes, (0, 0), slippery=False)
-    epsilon = .3
     test(env, epsilon, num_episodes=num_episodes)
 
 
 
-def test_blackjack():
+def test_blackjack(epsilon = .5):
     # tests Monte Carlo control on blackjack environment
     env = BlackJack()
-    epsilon = .5
     verbose = False
     bot = Bot(env=env, T = 20)
     # print("Policy before policy control:")

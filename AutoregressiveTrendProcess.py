@@ -70,14 +70,15 @@ class AutoregressiveTrendProcess(Environment):
         print("Price-max: ", state[5])
         print()
 
-
-if __name__ == "__main__":
+def main():
     T=30
     env = AutoregressiveTrendProcess(T=T)
     env.set_start()
     s = env.starting_state
+    print("Starting state:")
     env.print_state(s)
     rewards = []
+    print(f"Running {T} time-steps, picking random actions ...")
     for t in range(T):
         # perform a single random action
         a = random.choice(env.actions)
@@ -87,7 +88,12 @@ if __name__ == "__main__":
         # env.print_state(s)
         rewards.append(s[1])
         pass
+    print("Final state:")
     env.print_state(s)
     print("Rewards: ", rewards)
     plot_line_graph(env.prices, rewards, labels=["Prices", "Rewards"], title="")
     plot_line_graph()
+
+
+if __name__ == "__main__":
+    main()
