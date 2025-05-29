@@ -21,6 +21,9 @@ class Environment():
         if starting_state is not None:
             self.starting_state = starting_state
 
+    def reset(self):
+        pass
+
     def state_generator(self):
         # Generator for all possible states
         # input/output: none (to be overridden by subclass)

@@ -50,6 +50,9 @@ class GridWorld(Environment):
         # also put the starting state in the grid
         self.grid.put("S", *starting_state)
 
+    def reset(self):
+        self.set_start(self.starting_state)
+
     def state_generator(self):
         # Generates all possible states as (y, x) coordinates.
         # Input: None

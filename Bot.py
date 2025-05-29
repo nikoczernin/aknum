@@ -13,7 +13,7 @@ from BlackJack import BlackJack
 
 
 class Bot():
-    def __init__(self, env, T=100):
+    def __init__(self, env, T=100, initialize_policy=True):
         self.T = T # max number of time steps the agent is allowed to take
         # the environment contains states and actions
         self.env = env
@@ -21,8 +21,13 @@ class Bot():
         # I opted to use a dictionary that maps from states to actions to probabilities of using that action in that state
         # self.policy: pi(a|s) -> [0, 1]
         # I initialize them as equiprobable, which leads to random action-picking
+
+        # initialize_policy: boolean
+        # you may not want to initialize a policy, because e.g. in MC, precomputing all states may
+        # not be necessary
         self.policy = {}
-        self.init_policy()
+        if initialize_policy:
+            self.init_policy()
 
     def init_policy(self, hardline=False):
         # initializes the policy with equal probabilities for possible actions
@@ -48,12 +53,12 @@ class Bot():
             for a in self.policy[s].keys():
                 self.policy[s][a] = 1 if a == a_max else 0
 
-    def policy_set_action(self, s, a_new, policy = None):
+    def policy_set_action(self, s, a, policy = None):
         # with this function you can update a policy to set all actions for a given state to a probability of 0
         # except for the action a_new, which will get a probability of 1
         if policy is None: policy = self.policy
         for a in policy[s].keys():
-            policy[s][a] = 1 if a == a_new else 0
+            policy[s][a] = 1 if a == a else 0
 
 
     # function for picking the best action from a policy, draws are resolved randomly
@@ -65,11 +70,18 @@ class Bot():
             policy = self.policy
         if self.env.state_is_terminal(s_t):
             return None
+        # TODO: if the state is unknown to the policy, compute a new ruleset
+        if s_t not in policy.keys():
+            possible_actions = [a for a in self.env.actions if self.env.is_this_action_possible(s_t, a)]
+            policy[s_t] = {a:1/len(possible_actions) for a in possible_actions}
+
         # generate a random uniform number
         # if it is smaller than epsilon, we explore, otherwise we exploit normally
+        ##### EXPLORE #####
         if random.random() < epsilon:
             # do not pick any impossible action though
             return random.choice(list(a for a in policy[s_t].keys() if self.env.is_this_action_possible(s_t, a)))
+        ##### EXPLOIT #####
         else:
             # get the action with the highest probability given the current state from the policy
             max_prob = max(policy[s_t].values())

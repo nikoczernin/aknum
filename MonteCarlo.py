@@ -63,6 +63,12 @@ def MC_policy_control(bot: Bot, epsilon=.1, gamma=1, visit="first", off_policy=F
                 ])
                 # update the Bot policy (not necessarily the behaviour_policy) for all actions in the current state
                 for a in bot.env.actions:
+                    # TODO: the following check is also in the Bot.policy class
+                    # maybe we should generalize this ...
+                    # if there is no policy rule for this state yet, create it
+                    if s_t not in bot.policy.keys():
+                        possible_actions = [a for a in bot.env.actions if bot.env.is_this_action_possible(s_t, a)]
+                        bot.policy[s_t] = {a:1/len(possible_actions) for a in possible_actions}
                     bot.policy[s_t][a] = (1 - epsilon + epsilon/len(Q[s_t])) if a_optimal == a else epsilon/len(Q[s_t])
     print()
     # compute v damit ich es so wie der markus plotten kann amk
@@ -70,22 +76,22 @@ def MC_policy_control(bot: Bot, epsilon=.1, gamma=1, visit="first", off_policy=F
     return bot.policy, v
 
 
-def test(env, epsilon=.4, num_episodes=1000, off_policy=True, verbose=False):
+def test(env, epsilon=.4, num_episodes=1000, off_policy=True, verbose=False, num_test_runs=1000, T=100):
     # tests the environment by running episodes and policy optimization
     # inputs: env (Environment), epsilon (float), num_episodes (int), off_policy (bool), verbose (bool)
     # outputs: none (prints results)
     print("This is what the environment looks like:")
     print(env)
-    bot = Bot(env=env, T = 100)
+    bot = Bot(env=env, T = T, initialize_policy=False)
     # print("Policy before policy control:")
     # pprint(bot.policy)
     print("Now we run some episodes and see what we get (before optimizing the policy):")
-    bot.make_test_runs(k=1000, verbose=verbose)
+    bot.make_test_runs(k=num_test_runs, verbose=verbose)
     print()
     print("##### Performing policy control #####")
     pi, v = MC_policy_control(bot, epsilon=epsilon, off_policy=off_policy, num_episodes=num_episodes)
-    print("Policy after policy control:")
-    bot.draw_policy()
+    # print("Policy after policy control:")
+    # bot.draw_policy()
     print("Full policy after policy control:")
     pprint(bot.policy)
     print()
@@ -95,7 +101,7 @@ def test(env, epsilon=.4, num_episodes=1000, off_policy=True, verbose=False):
     print()
     print()
     print("Make more test runs after policy control:")
-    bot.make_test_runs(k=1000)
+    bot.make_test_runs(k=num_test_runs)
 
 
 
@@ -145,23 +151,49 @@ def test_frozen_lake(epsilon = .3):
     test(env, epsilon, num_episodes=num_episodes)
 
 
+def test_frozen_lake_hard(epsilon = .6):
+    # tests Monte Carlo control on cliff walking scenario
+    h, w = 10, 10
+    maze = np.array([
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+        [1, 0, 1, 0, 1, 0, 1, 1, 0, 1],
+        [1, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 0, 1, 0, 1, 0, 1],
+        [1, 1, 1, 1, 0, 1, 0, 1, 0, 1],
+        [1, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 1, 1, 1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    ])
 
-def test_blackjack(epsilon = .5):
+    # collect (y, x) coordinates of walls (value == 1)
+    holes = [(y, x)
+             for y in range(maze.shape[0])
+             for x in range(maze.shape[1])
+             if maze[y, x] == 1]
+
+    env = FrozenLake(h, w, goals=[(8, 8)], starting_state=(1, 1), holes=holes, slippery=False)
+    test(env, epsilon, num_episodes=1000000)
+
+
+
+def test_blackjack(epsilon = .1):
     # tests Monte Carlo control on blackjack environment
     env = BlackJack()
     verbose = False
-    bot = Bot(env=env, T = 20)
-    # print("Policy before policy control:")
-    # pprint(bot.policy)
+    bot = Bot(env=env, T = 20, initialize_policy=False)
+    print("Policy before policy control:")
+    pprint(bot.policy)
     print("Now we run some episodes and see what we get (before optimizing the policy):")
-    bot.make_test_runs(k=100, verbose=verbose)
+    bot.make_test_runs(k=50000, verbose=verbose)
     print()
     print("##### Performing policy control #####")
     print()
-    MC_policy_control(bot, epsilon=epsilon, off_policy=True, num_episodes=100000)
-    # print("Policy after policy control:")
-    # pprint(bot.policy)
-    bot.make_test_runs(k=100)
+    MC_policy_control(bot, epsilon=epsilon, off_policy=True, num_episodes=1000000)
+    print("Policy after policy control:")
+    pprint(bot.policy)
+    bot.make_test_runs(k=5000)
     print()
     print("##### Performing a single episode with the new policy #####")
     bot.episode(verbose=True)
@@ -174,8 +206,9 @@ def main():
     # test_grid_world()
     # test_windy_world()
     # test_cliff_walking()
-    test_frozen_lake()
-    # test_blackjack()
+    # test_frozen_lake_hard()
+    # test_frozen_lake()
+    test_blackjack()
 
 if __name__ == '__main__':
     main()
