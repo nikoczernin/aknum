@@ -41,17 +41,19 @@ def SARSA(bot:Bot, alpha=.5, epsilon=.1, gamma=1, num_episodes=1000, expected=Fa
                         bot.policy[s_t_1][a_t_1] * Q[s_t_1][a_t_1] for a_t_1 in bot.policy[s_t_1]
                     ]))
 
+            # update the policy of the bot
+            # TODO: was setten wir als policy?
+            bot.policy_set_action(s_t, max(Q[s_t], key=Q[s_t].get))
+
             # set s_t and a_t to the new state and action (we are doing on-policy control)
             s_t, a_t = s_t_1, a_t_1
-            # update the policy of the bot
-            bot.policy_set_action(s_t, a_t)
     return Q
 
 def expected_SARSA(bot:Bot, alpha=.5, epsilon=.1, gamma=1, num_episodes=1000):
     return SARSA(bot, alpha, epsilon, gamma, num_episodes, expected=True)
 
 
-def Q_Learning(bot:Bot, alpha=.5, epsilon=.1, gamma=1, num_episodes=1000, expected=False):
+def Q_Learning(bot:Bot, alpha=.5, epsilon=.1, gamma=1, num_episodes=1000):
     print("Performing Q-Learning...")
     # init action-value function (tabular, finite)
     # should we consider all states beforehand?
@@ -79,17 +81,14 @@ def Q_Learning(bot:Bot, alpha=.5, epsilon=.1, gamma=1, num_episodes=1000, expect
             if bot.env.state_is_terminal(s_t_1):
                 Q[s_t][a_t] = Q[s_t][a_t] + alpha * (r - Q[s_t][a_t])
             else:
-                if not expected:
-                    Q[s_t][a_t] = Q[s_t][a_t] + alpha * (r + gamma * Q[s_t_1][a_t_1] - Q[s_t][a_t])
-                else:
-                    Q[s_t][a_t] = Q[s_t][a_t] + alpha * (r - Q[s_t][a_t] + sum([
-                        bot.policy[s_t_1][a_t_1] * Q[s_t_1][a_t_1] for a_t_1 in bot.policy[s_t_1]
-                    ]))
+                Q[s_t][a_t] = Q[s_t][a_t] + alpha * (r + gamma * Q[s_t_1][a_t_1] - Q[s_t][a_t])
+
+            # update the policy of the bot
+            # TODO: was setten wir als policy?
+            bot.policy_set_action(s_t, max(Q[s_t], key=Q[s_t].get))
 
             # set s_t to the new state (off-policy control so a_t_1 does not get used)
             s_t = s_t_1
-            # update the policy of the bot
-            bot.policy_set_action(s_t, a_t)
     return Q
 
 
