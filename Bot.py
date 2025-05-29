@@ -53,12 +53,12 @@ class Bot():
             for a in self.policy[s].keys():
                 self.policy[s][a] = 1 if a == a_max else 0
 
-    def policy_set_action(self, s, a, policy = None):
+    def policy_set_action(self, s, a_new, policy = None):
         # with this function you can update a policy to set all actions for a given state to a probability of 0
         # except for the action a_new, which will get a probability of 1
         if policy is None: policy = self.policy
         for a in policy[s].keys():
-            policy[s][a] = 1 if a == a else 0
+            policy[s][a] = 1 if a == a_new else 0
 
 
     # function for picking the best action from a policy, draws are resolved randomly
