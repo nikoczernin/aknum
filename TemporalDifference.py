@@ -114,9 +114,9 @@ def test_cliff_walking(algo=SARSA):
     env = CliffWalking(h, w, terminal_states=[(1, 4)], starting_state=(1, 0), cliffs=cliffs)
     print(env)
     bot = Bot(env)
-    alpha = 0.5
-    epsilon = .1
-    gamma = 1
+    alpha = .2
+    epsilon = .3
+    gamma = .9
     Q = algo(bot, alpha=alpha, epsilon=epsilon, gamma=gamma, num_episodes=10000)
     pprint("Q")
     pprint(Q)
@@ -130,5 +130,5 @@ def test_cliff_walking(algo=SARSA):
 if __name__ == '__main__':
     # test_grid_world(SARSA)
     # test_grid_world(expected_SARSA)
-    test_grid_world(Q_Learning)
-    # test_cliff_walking()
+    # test_grid_world(Q_Learning)
+    test_cliff_walking(Q_Learning)
