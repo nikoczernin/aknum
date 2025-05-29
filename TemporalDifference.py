@@ -16,6 +16,11 @@ def SARSA(bot:Bot, alpha=.5, epsilon=.1, gamma=1, num_episodes=1000, expected=Fa
     for k in range(num_episodes):
         # reset the env
         bot.env.reset()
+        # before every episode: set a policy according to Q
+        for s in Q.keys():
+            # update the policy of the bot
+            bot.policy_set_action(s, max(Q[s], key=Q[s].get))
+
         # initialize s
         s_t = bot.env.starting_state
         # choose action a from s_t using e-greedy policy
@@ -41,12 +46,10 @@ def SARSA(bot:Bot, alpha=.5, epsilon=.1, gamma=1, num_episodes=1000, expected=Fa
                         bot.policy[s_t_1][a_t_1] * Q[s_t_1][a_t_1] for a_t_1 in bot.policy[s_t_1]
                     ]))
 
-            # update the policy of the bot
-            # TODO: was setten wir als policy?
-            bot.policy_set_action(s_t, max(Q[s_t], key=Q[s_t].get))
-
             # set s_t and a_t to the new state and action (we are doing on-policy control)
             s_t, a_t = s_t_1, a_t_1
+
+
     return Q
 
 def expected_SARSA(bot:Bot, alpha=.5, epsilon=.1, gamma=1, num_episodes=1000):
@@ -63,6 +66,10 @@ def Q_Learning(bot:Bot, alpha=.5, epsilon=.1, gamma=1, num_episodes=1000):
     for k in range(num_episodes):
         # reset the env
         bot.env.reset()
+        for s in Q.keys():
+            # update the policy of the bot
+            bot.policy_set_action(s, max(Q[s], key=Q[s].get))
+
         # initialize s
         s_t = bot.env.starting_state
         for t in range(bot.T):
@@ -83,9 +90,6 @@ def Q_Learning(bot:Bot, alpha=.5, epsilon=.1, gamma=1, num_episodes=1000):
             else:
                 Q[s_t][a_t] = Q[s_t][a_t] + alpha * (r + gamma * Q[s_t_1][a_t_1] - Q[s_t][a_t])
 
-            # update the policy of the bot
-            # TODO: was setten wir als policy?
-            bot.policy_set_action(s_t, max(Q[s_t], key=Q[s_t].get))
 
             # set s_t to the new state (off-policy control so a_t_1 does not get used)
             s_t = s_t_1
@@ -131,4 +135,6 @@ if __name__ == '__main__':
     # test_grid_world(SARSA)
     # test_grid_world(expected_SARSA)
     # test_grid_world(Q_Learning)
+    test_cliff_walking(SARSA)
+    test_cliff_walking(expected_SARSA)
     test_cliff_walking(Q_Learning)
