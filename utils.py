@@ -18,11 +18,12 @@ def plot_line_graph(*values_lists, title="Line Graph", xlabel="X-axis", ylabel="
     plt.show()
 
 
-def plot_blockwise_means_line_graph(values_list, k=80,
-                                     title="Line Graph", xlabel="X-axis", ylabel="Y-axis", labels=None):
-    n = len(values_list)
+def plot_blockwise_mean_rewards_line_graph(rewards: list, k=80, j=8,
+                                           title="Line Graph", xlabel="X-axis", ylabel="Y-axis", labels=None):
+    print(f"Training rewards: [{', '.join(str(x) for x in rewards[:j])}, ..., {', '.join(str(x) for x in rewards[-j:])}]")
+    n = len(rewards)
     step_size = n//k
-    means = [np.mean(values_list[i : i + step_size]) for i in range(0, n, step_size)]
+    means = [np.mean(rewards[i: i + step_size]) for i in range(0, n, step_size)]
     plt.plot(means, label=labels)
     plt.title(title)
     plt.xlabel(xlabel)

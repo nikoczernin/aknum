@@ -205,7 +205,7 @@ class Bot():
         print("Best reward:", np.max([x[0] for x in results]))
         print("Mean reward:", np.mean([x[0] for x in results]))
         print("Mean time-step of termination:", np.mean([x[1] for x in results]))
-
+        print()
 
 if __name__ == "__main__":
     env = BlackJack()

@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from Bot import Bot
 from CliffWalking import CliffWalking
 from GridWorld import GridWorld
-from utils import plot_blockwise_means_line_graph, plot_line_graph
+from utils import plot_blockwise_mean_rewards_line_graph, plot_line_graph
 
 
 def SARSA(bot:Bot, alpha=.5, epsilon=.1, gamma=1.0, num_episodes=1000, expected=False):
@@ -218,9 +218,8 @@ def test_grid_world(algo=SARSA, print_q=False, alpha = .2, epsilon = .3, gamma =
     if print_q: pprint(Q)
     bot.draw_policy()
     # pprint(bot.policy)
+    plot_blockwise_mean_rewards_line_graph(total_rewards, title=f"Total Rewards {algo.__name__}", xlabel="episodes", ylabel="reward")
     bot.make_test_runs(1000)
-    # plot_line_graph(total_rewards)
-    plot_blockwise_means_line_graph(total_rewards, title=f"Total Rewards {algo.__name__}", xlabel="episodes", ylabel="reward")
     print("-"*50)
 
 
@@ -236,13 +235,15 @@ def test_cliff_walking(algo=SARSA, print_q=False, alpha = .2, epsilon = .3, gamm
     epsilon = .3
     gamma = .9
     Q, total_rewards = algo(bot, alpha=alpha, epsilon=epsilon, gamma=gamma, num_episodes=num_episodes)
-    pprint("Q")
-    if print_q: pprint(Q)
-    print("policy")
-    if print_q: pprint(bot.policy)
+    if print_q:
+        print("Q")
+        pprint(Q)
+    if print_q:
+        pprint(bot.policy)
+        # print("policy")
     bot.draw_policy()
+    plot_blockwise_mean_rewards_line_graph(total_rewards, title=f"Total Rewards {algo.__name__}", xlabel="episodes", ylabel="reward")
     bot.make_test_runs(1000)
-    plot_blockwise_means_line_graph(total_rewards, title=f"Total Rewards {algo.__name__}", xlabel="episodes", ylabel="reward")
     print("-"*50)
 
 
